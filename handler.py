@@ -22,7 +22,6 @@ for cache_dir in cache_dirs:
     print(f"Created cache directory: {cache_dir}")
 
 # Set ALL cache and temp directories to network volume
-# This is critical - HuggingFace downloads to temp first!
 os.environ["HF_HOME"] = "/runpod-volume/huggingface"
 os.environ["HF_HUB_CACHE"] = "/runpod-volume/huggingface/hub"
 os.environ["HUGGINGFACE_HUB_CACHE"] = "/runpod-volume/huggingface/hub"
@@ -33,6 +32,7 @@ os.environ["TMPDIR"] = "/runpod-volume/tmp"
 os.environ["TEMP"] = "/runpod-volume/tmp"
 os.environ["TMP"] = "/runpod-volume/tmp"
 
+print(f"Starting RunPod Handler...")
 print(f"Environment variables set:")
 print(f"  HF_HOME={os.environ['HF_HOME']}")
 print(f"  HF_HUB_CACHE={os.environ['HF_HUB_CACHE']}")
@@ -40,10 +40,6 @@ print(f"  TMPDIR={os.environ['TMPDIR']}")
 
 # Add FramePack to path
 sys.path.insert(0, "/app")
-
-# Import FramePack's demo_gradio module
-# This will handle all the model loading and processing
-import demo_gradio
 
 def download_image(url):
     """Download image from URL and return PIL Image"""
@@ -55,7 +51,6 @@ def download_image(url):
             tmp.write(response.content)
             tmp_path = tmp.name
 
-        # Open as PIL Image
         image = Image.open(tmp_path)
         return image
     except Exception as e:
@@ -64,43 +59,44 @@ def download_image(url):
 def handler(event):
     """RunPod serverless handler for FramePack"""
     try:
-        print("=" * 50)
-        print("Starting FramePack video generation")
-        print("=" * 50)
+        print("=" * 60)
+        print("FRAMEPACK JOB STARTED")
+        print("=" * 60)
 
         input_data = event.get("input", {})
         image_url = input_data.get("image_url")
         prompt = input_data.get("prompt", "")
 
-        # FramePack parameters with defaults
-        n_prompt = input_data.get("n_prompt", "")  # negative prompt
-        seed = input_data.get("seed", 12345)
-        total_second_length = input_data.get("video_length", 5)  # seconds
-        latent_window_size = input_data.get("latent_window_size", 3)
-        steps = input_data.get("steps", 25)
-        cfg = input_data.get("cfg_scale", 10.0)
-        gs = input_data.get("gs", 1.0)  # guidance scale
-        rs = input_data.get("rs", 0.5)  # random scale
-        gpu_memory_preservation = input_data.get("gpu_memory_preservation", 0.0)
-        use_teacache = input_data.get("use_teacache", False)
-        mp4_crf = input_data.get("mp4_crf", 18)
-
         if not image_url:
             return {"error": "image_url is required"}
 
-        print(f"Downloading image from: {image_url}")
-        input_image = download_image(image_url)
-        print(f"Image downloaded: {input_image.size}")
-
+        print(f"Image URL: {image_url}")
         print(f"Prompt: {prompt}")
-        print(f"Parameters: steps={steps}, cfg={cfg}, length={total_second_length}s")
+        print("Downloading input image...")
 
-        # Call FramePack's process function
-        # This handles model loading, video generation, everything
-        print("Starting FramePack processing...")
+        input_image = download_image(image_url)
+        print(f"Image downloaded successfully: {input_image.size}")
 
-        # The process function is a generator that yields progress updates
-        # We need to iterate through it to get the final result
+        # Import demo_gradio INSIDE the handler to avoid auto-launch
+        print("Loading FramePack (this may take a few minutes on first run)...")
+        import demo_gradio
+
+        print("Calling FramePack process function...")
+
+        # Call FramePack with parameters
+        n_prompt = ""
+        seed = 12345
+        total_second_length = 5
+        latent_window_size = 3
+        steps = 25
+        cfg = 10.0
+        gs = 1.0
+        rs = 0.5
+        gpu_memory_preservation = 0.0
+        use_teacache = False
+        mp4_crf = 18
+
+        # Process returns a generator
         result_generator = demo_gradio.process(
             input_image=input_image,
             prompt=prompt,
@@ -117,32 +113,33 @@ def handler(event):
             mp4_crf=mp4_crf
         )
 
-        # Iterate through the generator to completion
+        print("Processing video generation...")
+
+        # Iterate through generator to completion
         output_video_path = None
-        for result in result_generator:
-            # result is a tuple: (output_filename, preview_image, description, progress_html, ...)
+        for i, result in enumerate(result_generator):
             if result and len(result) > 0:
                 output_video_path = result[0]
-                if result[2]:  # description
-                    print(f"Progress: {result[2]}")
+                if len(result) > 2 and result[2]:
+                    print(f"Progress update {i}: {result[2]}")
 
         if not output_video_path or not os.path.exists(output_video_path):
             return {"error": "Video generation failed - no output file created"}
 
-        print(f"Video generated successfully: {output_video_path}")
+        print(f"Video generated: {output_video_path}")
 
-        # Read the video file
+        # Read video file
         with open(output_video_path, 'rb') as f:
             video_data = f.read()
 
-        # For now, we'll return the base64-encoded video
-        # In production, you'd upload this to R2
+        # Return base64 encoded video
         import base64
         video_base64 = base64.b64encode(video_data).decode('utf-8')
 
-        print("=" * 50)
-        print("Video generation complete!")
-        print("=" * 50)
+        print("=" * 60)
+        print("VIDEO GENERATION COMPLETE!")
+        print(f"Video size: {len(video_data)} bytes")
+        print("=" * 60)
 
         return {
             "status": "completed",
@@ -152,11 +149,16 @@ def handler(event):
         }
 
     except Exception as e:
-        error_msg = f"Error in handler: {str(e)}\n{traceback.format_exc()}"
+        error_msg = f"Handler error: {str(e)}\n{traceback.format_exc()}"
+        print("=" * 60)
+        print("ERROR IN HANDLER")
         print(error_msg)
+        print("=" * 60)
         return {"error": error_msg}
 
 if __name__ == "__main__":
-    print("Starting RunPod serverless handler for FramePack...")
-    print(f"Models will be cached to: /runpod-volume/huggingface")
+    print("=" * 60)
+    print("STARTING RUNPOD SERVERLESS HANDLER")
+    print("Models will cache to: /runpod-volume/huggingface")
+    print("=" * 60)
     runpod.serverless.start({"handler": handler})
