@@ -14,12 +14,31 @@ cache_dirs = [
     "/runpod-volume/huggingface/transformers",
     "/runpod-volume/huggingface/datasets",
     "/runpod-volume/torch",
-    "/runpod-volume/tmp"
+    "/runpod-volume/tmp",
+    "/runpod-volume/hf_download"
 ]
 
 for cache_dir in cache_dirs:
     Path(cache_dir).mkdir(parents=True, exist_ok=True)
     print(f"Created cache directory: {cache_dir}")
+
+# Create symlink to redirect hardcoded /app/hf_download to network volume
+hf_download_symlink = "/app/hf_download"
+hf_download_target = "/runpod-volume/hf_download"
+
+# Remove existing symlink/directory if it exists
+if os.path.exists(hf_download_symlink) or os.path.islink(hf_download_symlink):
+    if os.path.islink(hf_download_symlink):
+        os.unlink(hf_download_symlink)
+        print(f"Removed old symlink: {hf_download_symlink}")
+    elif os.path.isdir(hf_download_symlink):
+        import shutil
+        shutil.rmtree(hf_download_symlink)
+        print(f"Removed old directory: {hf_download_symlink}")
+
+# Create the symlink
+os.symlink(hf_download_target, hf_download_symlink)
+print(f"Created symlink: {hf_download_symlink} -> {hf_download_target}")
 
 # Set ALL cache and temp directories to network volume
 os.environ["HF_HOME"] = "/runpod-volume/huggingface"

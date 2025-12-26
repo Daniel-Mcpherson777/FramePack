@@ -36,10 +36,6 @@ RUN pip install --no-cache-dir \
 # Copy FramePack application files
 COPY . .
 
-# Create symlink so demo_gradio's hardcoded /app/hf_download goes to network volume
-RUN mkdir -p /runpod-volume-placeholder/hf_download && \
-    ln -sf /runpod-volume-placeholder/hf_download /app/hf_download
-
 # Set environment variables for model caching to network volume
 # CRITICAL: Set TMPDIR to network volume so HuggingFace downloads don't fill local disk
 ENV HF_HOME=/runpod-volume/huggingface
