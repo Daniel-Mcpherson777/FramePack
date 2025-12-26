@@ -106,10 +106,10 @@ def handler(event):
 
         print("Starting video generation...")
 
-        # Call FramePack with original working parameters
+        # Call FramePack with working parameters (3 seconds @ 6fps)
         n_prompt = ""
         seed = 12345
-        total_second_length = 5
+        total_second_length = 0.6  # 18 frames for 3-second video @ 6fps
         latent_window_size = 3
         steps = 25
         cfg = 10.0
@@ -118,7 +118,7 @@ def handler(event):
         gpu_memory_preservation = 6.0
         use_teacache = False
         mp4_crf = 18
-        fps = 30
+        fps = 6
 
         # Call the clean inference function (returns path directly, no generator)
         output_video_path = inference.generate_video(
