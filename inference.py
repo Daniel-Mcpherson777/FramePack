@@ -27,9 +27,8 @@ from diffusers_helper.bucket_tools import find_nearest_bucket
 
 # Determine VRAM mode
 free_mem_gb = get_cuda_free_memory_gb(gpu)
-# Force low-VRAM mode for A100 80GB to enable VAE slicing/tiling
-# Only use high-VRAM mode for 100GB+ GPUs
-high_vram = free_mem_gb > 100
+# H100 80GB has enough VRAM - use high quality mode (no VAE slicing artifacts)
+high_vram = free_mem_gb > 60
 
 print(f'Free VRAM {free_mem_gb} GB')
 print(f'High-VRAM Mode: {high_vram}')
@@ -138,7 +137,7 @@ def generate_video(input_image, prompt, n_prompt="", seed=12345, total_second_le
         print("Image processing...")
 
         H, W, C = input_image.shape
-        height, width = find_nearest_bucket(H, W, resolution=640)
+        height, width = find_nearest_bucket(H, W, resolution=1024)  # Higher res for better quality
         input_image_np = resize_and_center_crop(input_image, target_width=width, target_height=height)
 
         Image.fromarray(input_image_np).save(os.path.join(outputs_folder, f'{job_id}.png'))
