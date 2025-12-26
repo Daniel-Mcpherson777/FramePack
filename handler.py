@@ -5,12 +5,29 @@ import tempfile
 import requests
 import traceback
 from PIL import Image
+from pathlib import Path
+
+# Create cache directories on network volume FIRST
+cache_dirs = [
+    "/runpod-volume/huggingface",
+    "/runpod-volume/huggingface/transformers",
+    "/runpod-volume/huggingface/datasets",
+    "/runpod-volume/torch"
+]
+
+for cache_dir in cache_dirs:
+    Path(cache_dir).mkdir(parents=True, exist_ok=True)
+    print(f"Created cache directory: {cache_dir}")
 
 # Set cache directories to network volume
 os.environ["HF_HOME"] = "/runpod-volume/huggingface"
 os.environ["TRANSFORMERS_CACHE"] = "/runpod-volume/huggingface/transformers"
 os.environ["HF_DATASETS_CACHE"] = "/runpod-volume/huggingface/datasets"
 os.environ["TORCH_HOME"] = "/runpod-volume/torch"
+
+print(f"Environment variables set:")
+print(f"  HF_HOME={os.environ['HF_HOME']}")
+print(f"  TRANSFORMERS_CACHE={os.environ['TRANSFORMERS_CACHE']}")
 
 # Add FramePack to path
 sys.path.insert(0, "/app")
