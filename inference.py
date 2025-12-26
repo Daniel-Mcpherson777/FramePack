@@ -96,7 +96,7 @@ print("Models loaded successfully!")
 @torch.no_grad()
 def generate_video(input_image, prompt, n_prompt="", seed=12345, total_second_length=5,
                    latent_window_size=3, steps=25, cfg=10.0, gs=1.0, rs=0.5,
-                   gpu_memory_preservation=0.0, use_teacache=False, mp4_crf=18):
+                   gpu_memory_preservation=0.0, use_teacache=False, mp4_crf=18, fps=30):
     """
     Generate video from image and prompt without Gradio dependencies
 
@@ -269,7 +269,7 @@ def generate_video(input_image, prompt, n_prompt="", seed=12345, total_second_le
 
             output_filename = os.path.join(outputs_folder, f'{job_id}_{total_generated_latent_frames}.mp4')
 
-            save_bcthw_as_mp4(history_pixels, output_filename, fps=30, crf=mp4_crf)
+            save_bcthw_as_mp4(history_pixels, output_filename, fps=fps, crf=mp4_crf)
 
             print(f'Decoded. Current latent shape {real_history_latents.shape}; pixel shape {history_pixels.shape}')
             print(f'Saved: {output_filename}')

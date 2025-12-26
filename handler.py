@@ -109,7 +109,7 @@ def handler(event):
         # Call FramePack with parameters
         n_prompt = ""
         seed = 12345
-        total_second_length = 5
+        total_second_length = 0.6  # Generate 18 frames (0.6 * 30fps) for 3-second video @ 6fps
         latent_window_size = 3
         steps = 25
         cfg = 10.0
@@ -118,6 +118,7 @@ def handler(event):
         gpu_memory_preservation = 6.0  # Preserve 6GB for memory management
         use_teacache = False
         mp4_crf = 18
+        fps = 6  # 6fps playback (18 frames / 6fps = 3 seconds)
 
         # Call the clean inference function (returns path directly, no generator)
         output_video_path = inference.generate_video(
@@ -133,7 +134,8 @@ def handler(event):
             rs=rs,
             gpu_memory_preservation=gpu_memory_preservation,
             use_teacache=use_teacache,
-            mp4_crf=mp4_crf
+            mp4_crf=mp4_crf,
+            fps=fps
         )
 
         if not output_video_path or not os.path.exists(output_video_path):
