@@ -10,24 +10,33 @@ from pathlib import Path
 # Create cache directories on network volume FIRST
 cache_dirs = [
     "/runpod-volume/huggingface",
+    "/runpod-volume/huggingface/hub",
     "/runpod-volume/huggingface/transformers",
     "/runpod-volume/huggingface/datasets",
-    "/runpod-volume/torch"
+    "/runpod-volume/torch",
+    "/runpod-volume/tmp"
 ]
 
 for cache_dir in cache_dirs:
     Path(cache_dir).mkdir(parents=True, exist_ok=True)
     print(f"Created cache directory: {cache_dir}")
 
-# Set cache directories to network volume
+# Set ALL cache and temp directories to network volume
+# This is critical - HuggingFace downloads to temp first!
 os.environ["HF_HOME"] = "/runpod-volume/huggingface"
+os.environ["HF_HUB_CACHE"] = "/runpod-volume/huggingface/hub"
+os.environ["HUGGINGFACE_HUB_CACHE"] = "/runpod-volume/huggingface/hub"
 os.environ["TRANSFORMERS_CACHE"] = "/runpod-volume/huggingface/transformers"
 os.environ["HF_DATASETS_CACHE"] = "/runpod-volume/huggingface/datasets"
 os.environ["TORCH_HOME"] = "/runpod-volume/torch"
+os.environ["TMPDIR"] = "/runpod-volume/tmp"
+os.environ["TEMP"] = "/runpod-volume/tmp"
+os.environ["TMP"] = "/runpod-volume/tmp"
 
 print(f"Environment variables set:")
 print(f"  HF_HOME={os.environ['HF_HOME']}")
-print(f"  TRANSFORMERS_CACHE={os.environ['TRANSFORMERS_CACHE']}")
+print(f"  HF_HUB_CACHE={os.environ['HF_HUB_CACHE']}")
+print(f"  TMPDIR={os.environ['TMPDIR']}")
 
 # Add FramePack to path
 sys.path.insert(0, "/app")

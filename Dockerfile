@@ -37,10 +37,16 @@ RUN pip install --no-cache-dir \
 COPY . .
 
 # Set environment variables for model caching to network volume
+# CRITICAL: Set TMPDIR to network volume so HuggingFace downloads don't fill local disk
 ENV HF_HOME=/runpod-volume/huggingface
+ENV HF_HUB_CACHE=/runpod-volume/huggingface/hub
+ENV HUGGINGFACE_HUB_CACHE=/runpod-volume/huggingface/hub
 ENV TRANSFORMERS_CACHE=/runpod-volume/huggingface/transformers
 ENV HF_DATASETS_CACHE=/runpod-volume/huggingface/datasets
 ENV TORCH_HOME=/runpod-volume/torch
+ENV TMPDIR=/runpod-volume/tmp
+ENV TEMP=/runpod-volume/tmp
+ENV TMP=/runpod-volume/tmp
 ENV PYTHONUNBUFFERED=1
 
 # Run the handler
