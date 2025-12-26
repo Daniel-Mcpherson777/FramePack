@@ -106,19 +106,19 @@ def handler(event):
 
         print("Starting video generation...")
 
-        # Call FramePack with parameters (optimized for quality)
+        # Call FramePack with original working parameters
         n_prompt = ""
         seed = 12345
-        total_second_length = 0.6  # Generate 18 frames (0.6 * 30fps) for 3-second video @ 6fps
+        total_second_length = 5
         latent_window_size = 3
-        steps = 40  # Increased from 25 for better quality
+        steps = 25
         cfg = 10.0
         gs = 1.0
         rs = 0.5
-        gpu_memory_preservation = 3.0  # Reduced from 6GB - H100 has plenty of VRAM
+        gpu_memory_preservation = 6.0
         use_teacache = False
-        mp4_crf = 12  # Lower = better quality (was 18)
-        fps = 6  # 6fps playback (18 frames / 6fps = 3 seconds)
+        mp4_crf = 18
+        fps = 30
 
         # Call the clean inference function (returns path directly, no generator)
         output_video_path = inference.generate_video(
