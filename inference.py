@@ -137,7 +137,7 @@ def generate_video(input_image, prompt, n_prompt="", seed=12345, total_second_le
         print("Image processing...")
 
         H, W, C = input_image.shape
-        height, width = find_nearest_bucket(H, W, resolution=1024)  # Higher res for better quality
+        height, width = find_nearest_bucket(H, W, resolution=640)  # Only 640 supported by bucket_options
         input_image_np = resize_and_center_crop(input_image, target_width=width, target_height=height)
 
         Image.fromarray(input_image_np).save(os.path.join(outputs_folder, f'{job_id}.png'))
