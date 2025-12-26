@@ -96,11 +96,15 @@ def handler(event):
         input_image = download_image(image_url)
         print(f"Image downloaded successfully: {input_image.size}")
 
-        # Import demo_gradio INSIDE the handler to avoid auto-launch
-        print("Loading FramePack (this may take a few minutes on first run)...")
-        import demo_gradio
+        # Convert PIL Image to numpy array for inference
+        import numpy as np
+        input_image_np = np.array(input_image)
 
-        print("Calling FramePack process function...")
+        # Import clean inference module (NO Gradio!)
+        print("Loading FramePack inference (this may take a few minutes on first run)...")
+        import inference
+
+        print("Starting video generation...")
 
         # Call FramePack with parameters
         n_prompt = ""
@@ -115,9 +119,9 @@ def handler(event):
         use_teacache = False
         mp4_crf = 18
 
-        # Process returns a generator
-        result_generator = demo_gradio.process(
-            input_image=input_image,
+        # Call the clean inference function (returns path directly, no generator)
+        output_video_path = inference.generate_video(
+            input_image=input_image_np,
             prompt=prompt,
             n_prompt=n_prompt,
             seed=seed,
@@ -131,16 +135,6 @@ def handler(event):
             use_teacache=use_teacache,
             mp4_crf=mp4_crf
         )
-
-        print("Processing video generation...")
-
-        # Iterate through generator to completion
-        output_video_path = None
-        for i, result in enumerate(result_generator):
-            if result and len(result) > 0:
-                output_video_path = result[0]
-                if len(result) > 2 and result[2]:
-                    print(f"Progress update {i}: {result[2]}")
 
         if not output_video_path or not os.path.exists(output_video_path):
             return {"error": "Video generation failed - no output file created"}

@@ -29,7 +29,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install additional dependencies
 RUN pip install --no-cache-dir \
     runpod \
-    gradio \
     requests \
     Pillow
 
