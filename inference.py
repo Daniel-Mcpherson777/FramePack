@@ -27,7 +27,9 @@ from diffusers_helper.bucket_tools import find_nearest_bucket
 
 # Determine VRAM mode
 free_mem_gb = get_cuda_free_memory_gb(gpu)
-high_vram = free_mem_gb > 60
+# Force low-VRAM mode for A100 80GB to enable VAE slicing/tiling
+# Only use high-VRAM mode for 100GB+ GPUs
+high_vram = free_mem_gb > 100
 
 print(f'Free VRAM {free_mem_gb} GB')
 print(f'High-VRAM Mode: {high_vram}')

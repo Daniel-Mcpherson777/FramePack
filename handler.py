@@ -115,7 +115,7 @@ def handler(event):
         cfg = 10.0
         gs = 1.0
         rs = 0.5
-        gpu_memory_preservation = 0.0
+        gpu_memory_preservation = 6.0  # Preserve 6GB for memory management
         use_teacache = False
         mp4_crf = 18
 
