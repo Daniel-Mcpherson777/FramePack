@@ -30,7 +30,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir \
     runpod \
     requests \
-    Pillow
+    Pillow \
+    boto3
 
 # Copy FramePack application files
 COPY . .
@@ -47,6 +48,13 @@ ENV TMPDIR=/runpod-volume/tmp
 ENV TEMP=/runpod-volume/tmp
 ENV TMP=/runpod-volume/tmp
 ENV PYTHONUNBUFFERED=1
+
+# Cloudflare R2 configuration (set these as RunPod secrets or environment variables)
+ENV R2_ACCOUNT_ID=0681fbcbe78d97ddc0600e26eb3034cc
+ENV R2_ACCESS_KEY_ID=87f7a4ba05ad19bfcf7820a7b175d03a
+ENV R2_SECRET_ACCESS_KEY=b78d5b4c21887687246bc460c46f92f36be8dcc2d242e5e003715fe765854f2f
+ENV R2_BUCKET_NAME=graphicsgod-storage
+ENV R2_PUBLIC_URL=https://pub-2edbe636fe384a5b881ec1342972f472.r2.dev
 
 # Run the handler
 CMD ["python", "/app/handler.py"]

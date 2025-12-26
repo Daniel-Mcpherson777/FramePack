@@ -143,24 +143,58 @@ def handler(event):
 
         print(f"Video generated: {output_video_path}")
 
-        # Read video file
-        with open(output_video_path, 'rb') as f:
-            video_data = f.read()
+        # Upload video to Cloudflare R2
+        import boto3
+        from datetime import datetime
 
-        # Return base64 encoded video
-        import base64
-        video_base64 = base64.b64encode(video_data).decode('utf-8')
+        print("Uploading video to Cloudflare R2...")
+
+        # R2 credentials from environment (set in Dockerfile or RunPod secrets)
+        r2_account_id = os.environ.get("R2_ACCOUNT_ID")
+        r2_access_key = os.environ.get("R2_ACCESS_KEY_ID")
+        r2_secret_key = os.environ.get("R2_SECRET_ACCESS_KEY")
+        r2_bucket = os.environ.get("R2_BUCKET_NAME", "graphicsgod-storage")
+        r2_public_url = os.environ.get("R2_PUBLIC_URL", "https://pub-2edbe636fe384a5b881ec1342972f472.r2.dev")
+
+        # Create S3 client for R2
+        s3 = boto3.client(
+            's3',
+            endpoint_url=f'https://{r2_account_id}.r2.cloudflarestorage.com',
+            aws_access_key_id=r2_access_key,
+            aws_secret_access_key=r2_secret_key,
+            region_name='auto'
+        )
+
+        # Generate unique filename
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"videos/generated_{timestamp}.mp4"
+
+        # Upload to R2
+        with open(output_video_path, 'rb') as f:
+            s3.upload_fileobj(
+                f,
+                r2_bucket,
+                filename,
+                ExtraArgs={'ContentType': 'video/mp4'}
+            )
+
+        # Construct public URL
+        video_url = f"{r2_public_url}/{filename}"
+
+        # Get file size
+        video_size = os.path.getsize(output_video_path)
 
         print("=" * 60)
         print("VIDEO GENERATION COMPLETE!")
-        print(f"Video size: {len(video_data)} bytes")
+        print(f"Video size: {video_size} bytes")
+        print(f"Video URL: {video_url}")
         print("=" * 60)
 
         return {
             "status": "completed",
-            "video_base64": video_base64,
-            "video_size_bytes": len(video_data),
-            "message": "Video generated successfully"
+            "video_url": video_url,
+            "video_size_bytes": video_size,
+            "message": "Video generated and uploaded successfully"
         }
 
     except Exception as e:
